@@ -1,0 +1,5 @@
+PySide6>=6.6,<7.0
+Pillow>=10.0
+pillow-heif>=0.16
+rapidocr-onnxruntime>=1.2.3
+pyinstaller>=6.0
