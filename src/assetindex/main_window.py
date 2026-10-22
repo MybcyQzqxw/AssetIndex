@@ -14,7 +14,7 @@ from PySide6.QtWidgets import (
 )
 
 from . import processor
-from .constants import APP_NAME
+from .constants import APP_NAME, DEFAULT_OUTPUT_DIR, DEFAULT_RESOURCE_DIR
 from .widgets.console import ConsoleWidget
 from .widgets.path_picker import PathPicker
 
@@ -78,8 +78,12 @@ class MainWindow(QMainWindow):
         self._worker: _Worker | None = None
 
         self._build_ui()
-        self.resource_picker.set_path(self._settings.value("resource_dir", "", str), emit=False)
-        self.output_picker.set_path(self._settings.value("output_dir", "", str), emit=False)
+        self.resource_picker.set_path(
+            self._settings.value("resource_dir", "", str) or DEFAULT_RESOURCE_DIR, emit=False
+        )
+        self.output_picker.set_path(
+            self._settings.value("output_dir", "", str) or DEFAULT_OUTPUT_DIR, emit=False
+        )
         self.console.info("就绪。请选择图片来源（Resource）与图片输出（Output）目录，然后点击“开始重命名输出”。")
 
     def _build_ui(self) -> None:

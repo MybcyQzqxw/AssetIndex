@@ -14,3 +14,7 @@ IGNORED_FILENAMES = {"thumbs.db", "desktop.ini", ".ds_store"}
 
 OUTPUT_FORMAT = ".jpg"
 JPEG_QUALITY = 95
+
+# Folders pre-filled on first launch (a remembered choice takes precedence).
+DEFAULT_RESOURCE_DIR = r"D:\mine\！文件\设备统计\Resource"
+DEFAULT_OUTPUT_DIR = r"D:\mine\！文件\设备统计\Output"

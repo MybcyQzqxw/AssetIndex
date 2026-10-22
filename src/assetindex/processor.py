@@ -39,7 +39,11 @@ class RunSummary:
     exported: int = 0
     skipped_duplicate: int = 0
     failed: int = 0
+    rotated: int = 0
     aborted: bool = False
+
+
+_ROTATION_TEXT = {90: "逆时针旋转 90°", 180: "旋转 180°", 270: "顺时针旋转 90°"}
 
 
 def scan_resource(folder: str) -> ScanResult:
@@ -86,8 +90,11 @@ def _group_output_paths(output_dir: str, number: str) -> List[str]:
     return [os.path.join(output_dir, f"{number}-{suffix}{OUTPUT_FORMAT}") for suffix in GROUP_SUFFIXES]
 
 
-def _save_jpg(src: str, dst: str) -> None:
-    open_image(src).save(dst, "JPEG", quality=JPEG_QUALITY, optimize=True)
+def _save_jpg(src: str, dst: str, rotation: int = 0) -> None:
+    image = open_image(src)
+    if rotation:
+        image = image.rotate(rotation, expand=True)
+    image.save(dst, "JPEG", quality=JPEG_QUALITY, optimize=True)
 
 
 def run(resource_dir: str, output_dir: str, log: Logger, reader: Optional[AssetNumberReader] = None) -> RunSummary:
@@ -147,10 +154,18 @@ def run(resource_dir: str, output_dir: str, log: Logger, reader: Optional[AssetN
             continue
 
         written: List[str] = []
+        rotated_here: List[str] = []
         try:
             for photo, target in zip(group, targets):
-                _save_jpg(photo.path, target)
+                try:
+                    rotation = reader.detect_rotation(photo.path)
+                except Exception as exc:
+                    rotation = 0
+                    log("warn", f"    方向检测失败，保持原方向：{os.path.basename(photo.path)}（{exc}）")
+                _save_jpg(photo.path, target, rotation)
                 written.append(target)
+                if rotation:
+                    rotated_here.append(f"{os.path.basename(target)}（{_ROTATION_TEXT[rotation]}）")
         except Exception as exc:
             for t in written:
                 try:
@@ -163,12 +178,15 @@ def run(resource_dir: str, output_dir: str, log: Logger, reader: Optional[AssetN
             continue
 
         summary.exported += 1
+        summary.rotated += len(rotated_here)
         log("success", f"    编号 {number}：已输出 3 张")
+        for item in rotated_here:
+            log("info", f"    已回正：{item}")
 
     log("info", "—" * 28)
     log(
         "success" if not summary.failed else "warn",
         f"处理完成：成功输出 {summary.exported} 组，跳过重复编号 {summary.skipped_duplicate} 组，"
-        f"失败 {summary.failed} 组",
+        f"失败 {summary.failed} 组，回正照片 {summary.rotated} 张",
     )
     return summary
